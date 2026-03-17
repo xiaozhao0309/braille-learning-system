@@ -1,20 +1,36 @@
-from fastapi import FastAPI, HTTPException
-from app.braille.braille_map import get_braille_pattern
+from fastapi import FastAPI
+
+from app.braille.braille_map import get_braille, translate_word
 
 app = FastAPI()
 
 
 @app.get("/")
 def root():
-    return {"message": "Braille Learning System API is running"}
+    return {"message": "Braille Learning API is running"}
 
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
+# 获取单个字母盲文
 @app.get("/braille/{letter}")
-def read_braille(letter: str):
-    pattern = get_braille_pattern(letter)
-    if pattern is None:
-        raise HTTPException(status_code=404, detail="Letter not found")
+def get_letter(letter: str):
+    dots = get_braille(letter)
+    if dots:
+        return {
+            "letter": letter,
+            "dots": dots
+        }
+    return {"error": "Letter not found"}
+
+
+# 单词翻译
+@app.get("/translate/{word}")
+def translate(word: str):
     return {
-        "letter": letter.lower(),
-        "braille_dots": pattern
+        "word": word,
+        "result": translate_word(word)
     }

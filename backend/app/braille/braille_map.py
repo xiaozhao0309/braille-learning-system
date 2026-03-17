@@ -1,3 +1,5 @@
+# braille_map.py
+
 BRAILLE_MAP = {
     "a": [1],
     "b": [1, 2],
@@ -9,9 +11,36 @@ BRAILLE_MAP = {
     "h": [1, 2, 5],
     "i": [2, 4],
     "j": [2, 4, 5],
+    "k": [1, 3],
+    "l": [1, 2, 3],
+    "m": [1, 3, 4],
+    "n": [1, 3, 4, 5],
+    "o": [1, 3, 5],
+    "p": [1, 2, 3, 4],
+    "q": [1, 2, 3, 4, 5],
+    "r": [1, 2, 3, 5],
+    "s": [2, 3, 4],
+    "t": [2, 3, 4, 5],
+    "u": [1, 3, 6],
+    "v": [1, 2, 3, 6],
+    "w": [2, 4, 5, 6],
+    "x": [1, 3, 4, 6],
+    "y": [1, 3, 4, 5, 6],
+    "z": [1, 3, 5, 6],
 }
 
 
-def get_braille_pattern(letter: str):
-    letter = letter.lower()
-    return BRAILLE_MAP.get(letter)
+def get_braille(letter: str):
+    return BRAILLE_MAP.get(letter.lower())
+
+
+def translate_word(word: str):
+    result = []
+    for ch in word.lower():
+        dots = BRAILLE_MAP.get(ch)
+        if dots:
+            result.append({
+                "letter": ch,
+                "dots": dots
+            })
+    return result
