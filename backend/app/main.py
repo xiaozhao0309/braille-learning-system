@@ -2,7 +2,7 @@ from fastapi import FastAPI, Body
 from app.braille.braille_map import get_braille, translate_word
 from app.braille.rule_engine import evaluate_braille
 from app.braille.feedback import generate_feedback
-from app.database import init_db, save_record
+from app.database import init_db, save_record, get_summary
 
 app = FastAPI()
 init_db()
@@ -57,3 +57,8 @@ def submit_practice(data: dict = Body(...)):
         **result,
         "feedback": feedback
     }
+    
+# 统计正确率
+@app.get("/stats/summary")
+def stats_summary():
+    return get_summary()

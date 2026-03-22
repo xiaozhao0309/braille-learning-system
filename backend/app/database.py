@@ -38,3 +38,25 @@ def save_record(expected, actual, is_correct):
 
     conn.commit()
     conn.close()
+    
+def get_summary():
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT COUNT(*) FROM practice_records")
+    total_attempts = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM practice_records WHERE is_correct = 1")
+    correct_attempts = cursor.fetchone()[0]
+
+    conn.close()
+
+    accuracy = 0
+    if total_attempts > 0:
+        accuracy = round(correct_attempts / total_attempts, 2)
+
+    return {
+        "totalAttempts": total_attempts,
+        "correctAttempts": correct_attempts,
+        "accuracy": accuracy
+    }
