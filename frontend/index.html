@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Braille Learning System</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Braille Learning System</h1>
+    <p class="subtitle">Week 2 Prototype Demo</p>
+
+    <div class="card">
+      <h2>Practice Submission</h2>
+
+      <label for="expected">Expected dots</label>
+      <input id="expected" type="text" placeholder="Example: 1,2,4" />
+
+      <label for="actual">Actual dots</label>
+      <input id="actual" type="text" placeholder="Example: 1,4" />
+
+      <button id="submitBtn" type="button">Submit Practice</button>
+
+      <div id="result" class="result-box"></div>
+    </div>
+
+    <div class="card">
+      <h2>Learning Statistics</h2>
+      <button id="statsBtn" type="button">Load Stats Summary</button>
+      <div id="stats" class="result-box"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
