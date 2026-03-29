@@ -9,27 +9,60 @@
 <body>
   <div class="container">
     <h1>Braille Learning System</h1>
-    <p class="subtitle">Prototype Demo</p>
+    <p class="subtitle">Electron Desktop Prototype</p>
 
-    <div class="card">
+    <section class="card">
       <h2>Practice Submission</h2>
 
-      <label for="expected">Expected dots</label>
-      <input id="expected" type="text" placeholder="Example: 1,2,4" />
+      <div class="braille-input-section">
+        <h3>Expected dots</h3>
+        <div class="braille-cell" id="expectedCell">
+          <button class="dot" data-group="expected" data-dot="1"></button>
+          <button class="dot" data-group="expected" data-dot="4"></button>
+          <button class="dot" data-group="expected" data-dot="2"></button>
+          <button class="dot" data-group="expected" data-dot="5"></button>
+          <button class="dot" data-group="expected" data-dot="3"></button>
+          <button class="dot" data-group="expected" data-dot="6"></button>
+        </div>
+        <p id="expectedDotsText">Selected: None</p>
+        <button id="clearExpectedBtn" class="secondary-btn">Clear Expected</button>
+      </div>
 
-      <label for="actual">Actual dots</label>
-      <input id="actual" type="text" placeholder="Example: 1,4" />
+      <div class="braille-input-section">
+        <h3>Actual dots</h3>
+        <div class="braille-cell" id="actualCell">
+          <button class="dot" data-group="actual" data-dot="1"></button>
+          <button class="dot" data-group="actual" data-dot="4"></button>
+          <button class="dot" data-group="actual" data-dot="2"></button>
+          <button class="dot" data-group="actual" data-dot="5"></button>
+          <button class="dot" data-group="actual" data-dot="3"></button>
+          <button class="dot" data-group="actual" data-dot="6"></button>
+        </div>
+        <p id="actualDotsText">Selected: None</p>
+        <button id="clearActualBtn" class="secondary-btn">Clear Actual</button>
+      </div>
 
-      <button id="submitBtn" type="button">Submit Practice</button>
+      <button id="submitBtn">Submit Practice</button>
 
-      <div id="result" class="result-box"></div>
-    </div>
+      <div class="result-box" id="resultBox">
+        <p>Correct: -</p>
+        <p>Error Type: -</p>
+        <p>Missing Dots: -</p>
+        <p>Extra Dots: -</p>
+        <p>Message: -</p>
+        <p>Suggestion: -</p>
+      </div>
+    </section>
 
-    <div class="card">
+    <section class="card">
       <h2>Learning Statistics</h2>
-      <button id="statsBtn" type="button">Load Stats Summary</button>
-      <div id="stats" class="result-box"></div>
-    </div>
+      <button id="loadStatsBtn">Load Stats Summary</button>
+      <div class="result-box" id="statsBox">
+        <p>Total Attempts: -</p>
+        <p>Correct Attempts: -</p>
+        <p>Accuracy: -</p>
+      </div>
+    </section>
   </div>
 
   <script src="script.js"></script>

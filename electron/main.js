@@ -24,6 +24,8 @@ function createWindow() {
 
   // Load the frontend HTML file
   win.loadFile(path.join(__dirname, "../frontend/index.html"));
+  // Open DevTools for debugging
+  win.webContents.openDevTools();
 }
 
 // Run when Electron is ready

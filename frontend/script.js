@@ -1,140 +1,159 @@
-console.log("script.js loaded");
-//alert("script.js loaded");
+document.addEventListener("DOMContentLoaded", () => {
+  const API_BASE = "http://127.0.0.1:8000";
 
-// Base URL of the backend API
-const API_BASE = "http://127.0.0.1:8000";
+  // Define two arrays to store the currently selected points
+  let expectedDots = [];
+  let actualDots = [];
 
-// Convert user input string (e.g., "1,2,3") into an array of numbers [1,2,3]
-function parseDots(input) {
-  return input
-    .split(",")
-    .map(item => item.trim())
-    .filter(item => item !== "")
-    .map(Number)
-    .filter(num => !isNaN(num));
-}
+  // Get all dot buttons
+  const dotButtons = document.querySelectorAll(".dot");
 
-// Run code after the page is fully loaded
-window.addEventListener("DOMContentLoaded", () => {
-  console.log("DOM fully loaded");
+  // Get text display elements
+  const expectedDotsText = document.getElementById("expectedDotsText");
+  const actualDotsText = document.getElementById("actualDotsText");
 
-  // Get elements from the HTML page
+  // Get buttons
   const submitBtn = document.getElementById("submitBtn");
-  const statsBtn = document.getElementById("statsBtn");
-  const expectedInputEl = document.getElementById("expected");
-  const actualInputEl = document.getElementById("actual");
-  const resultBox = document.getElementById("result");
-  const statsBox = document.getElementById("stats");
+  const clearExpectedBtn = document.getElementById("clearExpectedBtn");
+  const clearActualBtn = document.getElementById("clearActualBtn");
+  const loadStatsBtn = document.getElementById("loadStatsBtn");
 
-  console.log("submitBtn:", submitBtn);
-  console.log("statsBtn:", statsBtn);
-  console.log("expected:", expectedInputEl);
-  console.log("actual:", actualInputEl);
-  console.log("resultBox:", resultBox);
-  console.log("statsBox:", statsBox);
+  // Get result boxes
+  const resultBox = document.getElementById("resultBox");
+  const statsBox = document.getElementById("statsBox");
 
- // Check elements，stop if any required element is missing
-  if (!submitBtn || !statsBtn || !expectedInputEl || !actualInputEl || !resultBox || !statsBox) {
-    console.error("One or more required elements were not found.");
-    return;
+  // Update selected dots text
+  function updateDotsText() {
+    expectedDots.sort((a, b) => a - b); //Sort by numbers
+    actualDots.sort((a, b) => a - b);  //Sort by numbers
+
+    expectedDotsText.textContent =
+      expectedDots.length > 0
+        ? `Selected: ${expectedDots.join(", ")}`
+        : "Selected: None";
+
+    actualDotsText.textContent =
+      actualDots.length > 0
+        ? `Selected: ${actualDots.join(", ")}`
+        : "Selected: None";
   }
 
-  // ===================== Submit Practice =====================
-  submitBtn.addEventListener("click", async (event) => {
-    event.preventDefault();
-    console.log("submitBtn clicked");
+  // Toggle dot selection
+  function toggleDot(group, dotNumber, button) {
+    dotNumber = Number(dotNumber);
 
-    // Get user input values
-    const expectedInput = expectedInputEl.value;
-    const actualInput = actualInputEl.value;
+    if (group === "expected") {
+      if (expectedDots.includes(dotNumber)) {
+        expectedDots = expectedDots.filter(dot => dot !== dotNumber);
+        button.classList.remove("active");
+      } else {
+        expectedDots.push(dotNumber);
+        button.classList.add("active");
+      }
+    }
 
-    console.log("expectedInput:", expectedInput);
-    console.log("actualInput:", actualInput);
+    if (group === "actual") {
+      if (actualDots.includes(dotNumber)) {
+        actualDots = actualDots.filter(dot => dot !== dotNumber);
+        button.classList.remove("active");
+      } else {
+        actualDots.push(dotNumber);
+        button.classList.add("active");
+      }
+    }
 
-    // Convert input strings into arrays
-    const expected = parseDots(expectedInput);
-    const actual = parseDots(actualInput);
+    updateDotsText();
+  }
 
-    console.log("parsed expected:", expected);
-    console.log("parsed actual:", actual);
+  // Add click event to each dot
+  dotButtons.forEach(button => {
+    button.addEventListener("click", () => {
+      const group = button.dataset.group;
+      const dotNumber = button.dataset.dot;
+      toggleDot(group, dotNumber, button);
+    });
+  });
 
-    resultBox.textContent = "Loading...";
+  // Clear expected dots
+  clearExpectedBtn.addEventListener("click", () => {
+    expectedDots = [];
+    document.querySelectorAll('.dot[data-group="expected"]').forEach(button => {
+      button.classList.remove("active");
+    });
+    updateDotsText();
+  });
+
+  // Clear actual dots
+  clearActualBtn.addEventListener("click", () => {
+    actualDots = [];
+    document.querySelectorAll('.dot[data-group="actual"]').forEach(button => {
+      button.classList.remove("active");
+    });
+    updateDotsText();
+  });
+
+  // Submit practice
+  submitBtn.addEventListener("click", async () => {
+    resultBox.innerHTML = "<p>Loading...</p>";
 
     try {
-    // Send POST request to backend
       const response = await fetch(`${API_BASE}/practice/submit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ expected, actual })
+        body: JSON.stringify({
+          expected: expectedDots,
+          actual: actualDots
+        })
       });
 
-      console.log("response status:", response.status);
-    // If request failed
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("response not ok:", errorText);
-        resultBox.textContent = `Request failed: ${response.status}\n${errorText}`;
+        resultBox.innerHTML = `<p>Error: ${errorText}</p>`;
         return;
       }
 
-      // Parse response JSON
       const data = await response.json();
-      console.log("practice response data:", data);
 
-      // Extract result fields (with fallback values)
-      const isCorrect = data.isCorrect ?? "N/A";
-      const errorType = data.errorType ?? "N/A";
-      const missingDots = data.diff?.missingDots?.join(", ") || "None";
-      const extraDots = data.diff?.extraDots?.join(", ") || "None";
-      const message = data.feedback?.message || "No feedback message";
-      const suggestion = data.feedback?.suggestion || "No suggestion";
-
-      // Display result on the page
-      resultBox.textContent =
-        `Correct: ${isCorrect}\n` +
-        `Error Type: ${errorType}\n` +
-        `Missing Dots: ${missingDots}\n` +
-        `Extra Dots: ${extraDots}\n` +
-        `Message: ${message}\n` +
-        `Suggestion: ${suggestion}`;
-
-      console.log("resultBox updated");
+      resultBox.innerHTML = `
+        <p>Correct: ${data.isCorrect}</p>
+        <p>Error Type: ${data.errorType || "None"}</p>
+        <p>Missing Dots: ${data.diff?.missingDots?.length ? data.diff.missingDots.join(", ") : "None"}</p>
+        <p>Extra Dots: ${data.diff?.extraDots?.length ? data.diff.extraDots.join(", ") : "None"}</p>
+        <p>Message: ${data.ai?.explanation || "No message"}</p>
+        <p>Suggestion: ${data.ai?.practiceSuggestion || "No suggestion"}</p>
+      `;
     } catch (error) {
-      console.error("submit error:", error);
-      resultBox.textContent = `Failed to connect to backend.\n${error.message}`;
+      resultBox.innerHTML = `<p>Error: ${error.message}</p>`;
     }
   });
 
-   // ===================== Get Statistics =====================
-  statsBtn.addEventListener("click", async (event) => {
-    event.preventDefault();
-    console.log("statsBtn clicked");
+  // Load statistics
+  loadStatsBtn.addEventListener("click", async () => {
+    statsBox.innerHTML = "<p>Loading...</p>";
 
     try {
-        // Send GET request to backend
       const response = await fetch(`${API_BASE}/stats/summary`);
-      console.log("stats response status:", response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
-        statsBox.textContent = `Request failed: ${response.status}\n${errorText}`;
+        statsBox.innerHTML = `<p>Error: ${errorText}</p>`;
         return;
       }
 
-      // Parse response JSON
       const data = await response.json();
-      console.log("stats response data:", data);
 
-      // Display statistics
-      statsBox.textContent =
-        `Total Attempts: ${data.totalAttempts}\n` +
-        `Correct Attempts: ${data.correctAttempts}\n` +
-        `Accuracy: ${data.accuracy}`;
+      statsBox.innerHTML = `
+      <p>Total Attempts: ${data.totalAttempts ?? 0}</p>
+      <p>Correct Attempts: ${data.correctAttempts ?? 0}</p>
+      <p>Accuracy: ${data.accuracy ?? 0}</p>
+    `;
+
     } catch (error) {
-      console.error("stats error:", error);
-      statsBox.textContent = `Failed to load stats summary.\n${error.message}`;
+      statsBox.innerHTML = `<p>Error: ${error.message}</p>`;
     }
   });
+
+  updateDotsText();
 });
