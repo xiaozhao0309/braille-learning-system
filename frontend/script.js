@@ -1,31 +1,30 @@
 document.addEventListener("DOMContentLoaded", () => {
   const API_BASE = "http://127.0.0.1:8000";
 
-  // Define two arrays to store the currently selected points
   let expectedDots = [];
   let actualDots = [];
 
-  // Get all dot buttons
   const dotButtons = document.querySelectorAll(".dot");
 
-  // Get text display elements
   const expectedDotsText = document.getElementById("expectedDotsText");
   const actualDotsText = document.getElementById("actualDotsText");
 
-  // Get buttons
   const submitBtn = document.getElementById("submitBtn");
   const clearExpectedBtn = document.getElementById("clearExpectedBtn");
   const clearActualBtn = document.getElementById("clearActualBtn");
   const loadStatsBtn = document.getElementById("loadStatsBtn");
 
-  // Get result boxes
   const resultBox = document.getElementById("resultBox");
+  const explanationBox = document.getElementById("explanationBox");
   const statsBox = document.getElementById("statsBox");
 
-  // Update selected dots text
+  function sortDots(dots) {
+    return [...dots].sort((a, b) => a - b);
+  }
+
   function updateDotsText() {
-    expectedDots.sort((a, b) => a - b); //Sort by numbers
-    actualDots.sort((a, b) => a - b);  //Sort by numbers
+    expectedDots = sortDots(expectedDots);
+    actualDots = sortDots(actualDots);
 
     expectedDotsText.textContent =
       expectedDots.length > 0
@@ -38,7 +37,43 @@ document.addEventListener("DOMContentLoaded", () => {
         : "Selected: None";
   }
 
-  // Toggle dot selection
+  function renderResult(data) {
+    resultBox.innerHTML = `
+      <h3>Result</h3>
+      <p><strong>Correct:</strong> ${data.isCorrect}</p>
+      <p><strong>Error Type:</strong> ${data.errorType || "None"}</p>
+      <p><strong>Missing Dots:</strong> ${
+        data.diff?.missingDots?.length
+          ? data.diff.missingDots.join(", ")
+          : "None"
+      }</p>
+      <p><strong>Extra Dots:</strong> ${
+        data.diff?.extraDots?.length
+          ? data.diff.extraDots.join(", ")
+          : "None"
+      }</p>
+    `;
+
+    explanationBox.innerHTML = `
+      <h3>Explanation</h3>
+      <p><strong>Message:</strong> ${data.feedback?.message || "No message"}</p>
+      <p><strong>Suggestion:</strong> ${data.feedback?.suggestion || "No suggestion"}</p>
+    `;
+  }
+
+  function renderStats(data) {
+    statsBox.innerHTML = `
+      <h3>Statistics</h3>
+      <p><strong>Total Attempts:</strong> ${data.totalAttempts ?? 0}</p>
+      <p><strong>Correct Attempts:</strong> ${data.correctAttempts ?? 0}</p>
+      <p><strong>Accuracy:</strong> ${data.accuracy ?? 0}</p>
+    `;
+  }
+
+  function renderError(box, message) {
+    box.innerHTML = `<p><strong>Error:</strong> ${message}</p>`;
+  }
+
   function toggleDot(group, dotNumber, button) {
     dotNumber = Number(dotNumber);
 
@@ -65,7 +100,6 @@ document.addEventListener("DOMContentLoaded", () => {
     updateDotsText();
   }
 
-  // Add click event to each dot
   dotButtons.forEach(button => {
     button.addEventListener("click", () => {
       const group = button.dataset.group;
@@ -74,27 +108,55 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Clear expected dots
   clearExpectedBtn.addEventListener("click", () => {
     expectedDots = [];
-    document.querySelectorAll('.dot[data-group="expected"]').forEach(button => {
-      button.classList.remove("active");
-    });
+    document
+      .querySelectorAll('.dot[data-group="expected"]')
+      .forEach(button => button.classList.remove("active"));
     updateDotsText();
   });
 
-  // Clear actual dots
   clearActualBtn.addEventListener("click", () => {
     actualDots = [];
-    document.querySelectorAll('.dot[data-group="actual"]').forEach(button => {
-      button.classList.remove("active");
-    });
+    document
+      .querySelectorAll('.dot[data-group="actual"]')
+      .forEach(button => button.classList.remove("active"));
     updateDotsText();
   });
 
-  // Submit practice
+  async function loadStats() {
+    statsBox.innerHTML = "<p>Loading statistics...</p>";
+
+    try {
+      const response = await fetch(`${API_BASE}/stats/summary`);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        renderError(statsBox, errorText);
+        return;
+      }
+
+      const data = await response.json();
+      renderStats(data);
+    } catch (error) {
+      renderError(statsBox, error.message);
+    }
+  }
+
   submitBtn.addEventListener("click", async () => {
-    resultBox.innerHTML = "<p>Loading...</p>";
+    if (expectedDots.length === 0 || actualDots.length === 0) {
+      renderError(resultBox, "Please select dots for both expected and actual input.");
+      explanationBox.innerHTML = `<p>Please complete both Braille cells before submitting.</p>`;
+      return;
+    }
+
+    resultBox.innerHTML = "<p>Loading result...</p>";
+    explanationBox.innerHTML = "<p>Generating explanation...</p>";
+
+    const payload = {
+      expected: sortDots(expectedDots),
+      actual: sortDots(actualDots)
+    };
 
     try {
       const response = await fetch(`${API_BASE}/practice/submit`, {
@@ -102,58 +164,26 @@ document.addEventListener("DOMContentLoaded", () => {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          expected: expectedDots,
-          actual: actualDots
-        })
+        body: JSON.stringify(payload)
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        resultBox.innerHTML = `<p>Error: ${errorText}</p>`;
+        renderError(resultBox, errorText);
+        explanationBox.innerHTML = "";
         return;
       }
 
       const data = await response.json();
-
-      resultBox.innerHTML = `
-        <p>Correct: ${data.isCorrect}</p>
-        <p>Error Type: ${data.errorType || "None"}</p>
-        <p>Missing Dots: ${data.diff?.missingDots?.length ? data.diff.missingDots.join(", ") : "None"}</p>
-        <p>Extra Dots: ${data.diff?.extraDots?.length ? data.diff.extraDots.join(", ") : "None"}</p>
-        <p>Message: ${data.ai?.explanation || "No message"}</p>
-        <p>Suggestion: ${data.ai?.practiceSuggestion || "No suggestion"}</p>
-      `;
+      renderResult(data);
+      loadStats();
     } catch (error) {
-      resultBox.innerHTML = `<p>Error: ${error.message}</p>`;
+      renderError(resultBox, error.message);
+      explanationBox.innerHTML = "";
     }
   });
 
-  // Load statistics
-  loadStatsBtn.addEventListener("click", async () => {
-    statsBox.innerHTML = "<p>Loading...</p>";
-
-    try {
-      const response = await fetch(`${API_BASE}/stats/summary`);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        statsBox.innerHTML = `<p>Error: ${errorText}</p>`;
-        return;
-      }
-
-      const data = await response.json();
-
-      statsBox.innerHTML = `
-      <p>Total Attempts: ${data.totalAttempts ?? 0}</p>
-      <p>Correct Attempts: ${data.correctAttempts ?? 0}</p>
-      <p>Accuracy: ${data.accuracy ?? 0}</p>
-    `;
-
-    } catch (error) {
-      statsBox.innerHTML = `<p>Error: ${error.message}</p>`;
-    }
-  });
+  loadStatsBtn.addEventListener("click", loadStats);
 
   updateDotsText();
 });
