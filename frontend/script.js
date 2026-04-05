@@ -4,6 +4,12 @@ document.addEventListener("DOMContentLoaded", () => {
   let expectedDots = [];
   let actualDots = [];
 
+  // Random mode state
+  const letters = "abcdefghijklmnopqrstuvwxyz".split("");
+  let currentTarget = null;
+  let currentExpected = [];
+  let isRandomMode = false;
+
   const dotButtons = document.querySelectorAll(".dot");
 
   const expectedDotsText = document.getElementById("expectedDotsText");
@@ -13,10 +19,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const clearExpectedBtn = document.getElementById("clearExpectedBtn");
   const clearActualBtn = document.getElementById("clearActualBtn");
   const loadStatsBtn = document.getElementById("loadStatsBtn");
+  const generateBtn = document.getElementById("generateBtn");
 
   const resultBox = document.getElementById("resultBox");
   const explanationBox = document.getElementById("explanationBox");
   const statsBox = document.getElementById("statsBox");
+
+const targetLetterText = document.getElementById("targetLetterText");
+const expectedCell = document.getElementById("expectedCell");
+
+const manualModeBtn = document.getElementById("manualModeBtn");
+const randomModeBtn = document.getElementById("randomModeBtn");
 
   function sortDots(dots) {
     return [...dots].sort((a, b) => a - b);
@@ -74,12 +87,67 @@ document.addEventListener("DOMContentLoaded", () => {
     box.innerHTML = `<p><strong>Error:</strong> ${message}</p>`;
   }
 
+  function updateModeButtons() {
+    if (isRandomMode) {
+      manualModeBtn.classList.remove("active");
+      manualModeBtn.classList.add("inactive");
+
+      randomModeBtn.classList.remove("inactive");
+      randomModeBtn.classList.add("active");
+
+      generateBtn.disabled = false;
+      generateBtn.classList.remove("disabled-btn");
+      generateBtn.classList.add("enabled-btn");
+
+      expectedCell.classList.add("disabled");
+    } else {
+      manualModeBtn.classList.remove("inactive");
+      manualModeBtn.classList.add("active");
+
+      randomModeBtn.classList.remove("active");
+      randomModeBtn.classList.add("inactive");
+
+      generateBtn.disabled = true;
+      generateBtn.classList.remove("enabled-btn");
+      generateBtn.classList.add("disabled-btn");
+
+      expectedCell.classList.remove("disabled");
+    }
+  }
+
+  function setManualMode() {
+    isRandomMode = false;
+    currentTarget = null;
+    currentExpected = [];
+    targetLetterText.textContent = "Target: None";
+    expectedCell.classList.remove("disabled");
+    updateModeButtons();
+  }
+
+  function setRandomMode(letter = null, dots = []) {
+    isRandomMode = true;
+    currentTarget = letter;
+    currentExpected = sortDots(dots);
+
+    targetLetterText.textContent = letter
+      ? `Target: ${letter.toUpperCase()}`
+      : "Target: None";
+
+    expectedCell.classList.add("disabled");
+    updateModeButtons();
+  }
+
   function toggleDot(group, dotNumber, button) {
     dotNumber = Number(dotNumber);
 
+    // In random mode, expected dots should not be editable
+    if (isRandomMode && group === "expected") {
+      return;
+    }
+
     if (group === "expected") {
       if (expectedDots.includes(dotNumber)) {
-        expectedDots = expectedDots.filter(dot => dot !== dotNumber);
+        expectedDots = expectedDots.filter((dot) => dot !== dotNumber);
         button.classList.remove("active");
       } else {
         expectedDots.push(dotNumber);
@@ -89,7 +157,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (group === "actual") {
       if (actualDots.includes(dotNumber)) {
-        actualDots = actualDots.filter(dot => dot !== dotNumber);
+        actualDots = actualDots.filter((dot) => dot !== dotNumber);
         button.classList.remove("active");
       } else {
         actualDots.push(dotNumber);
@@ -99,30 +167,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     updateDotsText();
   }
-
-  dotButtons.forEach(button => {
-    button.addEventListener("click", () => {
-      const group = button.dataset.group;
-      const dotNumber = button.dataset.dot;
-      toggleDot(group, dotNumber, button);
-    });
-  });
-
-  clearExpectedBtn.addEventListener("click", () => {
-    expectedDots = [];
-    document
-      .querySelectorAll('.dot[data-group="expected"]')
-      .forEach(button => button.classList.remove("active"));
-    updateDotsText();
-  });
-
-  clearActualBtn.addEventListener("click", () => {
-    actualDots = [];
-    document
-      .querySelectorAll('.dot[data-group="actual"]')
-      .forEach(button => button.classList.remove("active"));
-    updateDotsText();
-  });
 
   async function loadStats() {
     statsBox.innerHTML = "<p>Loading statistics...</p>";
@@ -143,10 +187,114 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  async function generateRandomLetter() {
+    const randomLetter = letters[Math.floor(Math.random() * letters.length)];
+
+    resultBox.innerHTML = "<p>Generating random letter...</p>";
+    explanationBox.innerHTML = "<p>Please enter the Braille dots for the target letter.</p>";
+
+    try {
+      const response = await fetch(`${API_BASE}/braille/${randomLetter}`);
+
+      if (!response.ok) {
+        throw new Error("Failed to generate random letter.");
+      }
+
+      const data = await response.json();
+      const dots = data.dots || [];
+
+      setRandomMode(randomLetter, dots);
+
+      // Clear actual dots for the new question
+      actualDots = [];
+      document
+        .querySelectorAll('.dot[data-group="actual"]')
+        .forEach((button) => button.classList.remove("active"));
+
+      updateDotsText();
+
+      resultBox.innerHTML = `
+        <h3>Random Practice</h3>
+        <p><strong>New target generated.</strong></p>
+        <p>Enter the Braille pattern for letter <strong>${randomLetter.toUpperCase()}</strong> using the actual dots area.</p>
+      `;
+
+      explanationBox.innerHTML = `
+        <h3>Explanation</h3>
+        <p>Random practice is active. The system has generated the expected pattern automatically.</p>
+      `;
+    } catch (error) {
+      renderError(resultBox, error.message);
+      explanationBox.innerHTML = "";
+      targetLetterText.textContent = "Target: Error";
+    }
+  }
+
+  dotButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const group = button.dataset.group;
+      const dotNumber = button.dataset.dot;
+      toggleDot(group, dotNumber, button);
+    });
+  });
+
+  clearExpectedBtn.addEventListener("click", () => {
+    expectedDots = [];
+
+    document
+      .querySelectorAll('.dot[data-group="expected"]')
+      .forEach((button) => {
+        button.classList.remove("active");
+      });
+
+    setManualMode();
+    updateDotsText();
+  });
+
+  clearActualBtn.addEventListener("click", () => {
+    actualDots = [];
+
+    document
+      .querySelectorAll('.dot[data-group="actual"]')
+      .forEach((button) => {
+        button.classList.remove("active");
+      });
+
+    updateDotsText();
+  });
+
+  manualModeBtn.addEventListener("click", () => {
+    setManualMode();
+  });
+
+  randomModeBtn.addEventListener("click", () => {
+    setRandomMode();
+
+    resultBox.innerHTML = `
+      <h3>Random Practice</h3>
+      <p><strong>Random mode is active.</strong></p>
+      <p>Click "Generate Random Letter" to get a new target.</p>
+    `;
+
+    explanationBox.innerHTML = `
+      <h3>Explanation</h3>
+      <p>The system will generate the expected Braille pattern automatically in random mode.</p>
+    `;
+  });
+  generateBtn.addEventListener("click", generateRandomLetter);
+
   submitBtn.addEventListener("click", async () => {
-    if (expectedDots.length === 0 || actualDots.length === 0) {
-      renderError(resultBox, "Please select dots for both expected and actual input.");
-      explanationBox.innerHTML = `<p>Please complete both Braille cells before submitting.</p>`;
+    let expectedToUse = expectedDots;
+
+    if (isRandomMode && currentExpected.length > 0) {
+      expectedToUse = currentExpected;
+    }
+
+    if (expectedToUse.length === 0 || actualDots.length === 0) {
+      renderError(resultBox, "Please select dots before submitting.");
+      explanationBox.innerHTML = `
+        <p>Please complete the required Braille input before submitting.</p>
+      `;
       return;
     }
 
@@ -154,7 +302,7 @@ document.addEventListener("DOMContentLoaded", () => {
     explanationBox.innerHTML = "<p>Generating explanation...</p>";
 
     const payload = {
-      expected: sortDots(expectedDots),
+      expected: sortDots(expectedToUse),
       actual: sortDots(actualDots)
     };
 
@@ -186,4 +334,5 @@ document.addEventListener("DOMContentLoaded", () => {
   loadStatsBtn.addEventListener("click", loadStats);
 
   updateDotsText();
+  updateModeButtons();
 });

@@ -14,6 +14,23 @@
     <section class="card">
       <h2>Practice Submission</h2>
 
+      <!-- Mode -->
+    <h3>Mode</h3>
+    <div class="mode-switch">
+      <button id="manualModeBtn" class="mode-btn active">Manual</button>
+      <button id="randomModeBtn" class="mode-btn">Random</button>
+    </div>
+
+    <h3>Random Practice</h3>
+    <button id="generateBtn" class="secondary-btn disabled-btn" disabled>
+      Generate Random Letter
+    </button>
+    <p id="targetLetterText">Target: None</p>
+    <p class="hint">
+      Tip: In random mode, the system generates the expected dots automatically.
+    </p>
+
+      <!-- Expected -->
       <div class="braille-input-section">
         <h3>Expected dots</h3>
         <div class="braille-cell" id="expectedCell">
@@ -28,6 +45,7 @@
         <button id="clearExpectedBtn" class="secondary-btn">Clear Expected</button>
       </div>
 
+      <!-- Actual -->
       <div class="braille-input-section">
         <h3>Actual dots</h3>
         <div class="braille-cell" id="actualCell">
@@ -42,17 +60,21 @@
         <button id="clearActualBtn" class="secondary-btn">Clear Actual</button>
       </div>
 
+      <!-- Submit -->
       <button id="submitBtn">Submit Practice</button>
 
+      <!-- Result -->
       <div class="result-box" id="resultBox">
         <p>Result will appear here.</p>
       </div>
 
+      <!-- Explanation -->
       <div class="result-box" id="explanationBox">
         <p>Explanation will appear here.</p>
       </div>
     </section>
 
+    <!-- Statistics -->
     <section class="card">
       <h2>Learning Statistics</h2>
       <button id="loadStatsBtn">Load Stats Summary</button>

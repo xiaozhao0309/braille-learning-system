@@ -100,3 +100,54 @@ button:hover {
 .result-box p {
   margin: 6px 0;
 }
+
+.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.mode-switch {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.mode-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  background-color: #d1d5db;
+  color: #111827;
+  transition: all 0.2s ease;
+}
+
+.mode-btn.active {
+  background-color: #2563eb;
+  color: white;
+}
+
+.mode-btn.inactive {
+  background-color: #9ca3af;
+  color: white;
+}
+
+.disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.disabled-btn {
+  background-color: #9ca3af !important;
+  color: white;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.enabled-btn {
+  background-color: #2563eb !important;
+  color: white;
+  cursor: pointer;
+  opacity: 1;
+}
