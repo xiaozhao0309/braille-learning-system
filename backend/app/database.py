@@ -14,6 +14,7 @@ def init_db():
     CREATE TABLE IF NOT EXISTS practice_records (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         student_name TEXT,
+        target_letter TEXT,
         expected TEXT,
         actual TEXT,
         is_correct INTEGER,
@@ -26,16 +27,16 @@ def init_db():
 
 
 # Save one practice record into database
-def save_record(student_name, expected, actual, is_correct):
+def save_record(student_name, target_letter, expected, actual, is_correct):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
 
-    # Insert a new record
     cursor.execute("""
-    INSERT INTO practice_records (student_name, expected, actual, is_correct, created_at)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO practice_records (student_name, target_letter, expected, actual, is_correct, created_at)
+    VALUES (?, ?, ?, ?, ?, ?)
     """, (
         student_name,
+        target_letter,
         str(expected),
         str(actual),
         int(is_correct),
@@ -73,3 +74,23 @@ def get_summary(student_name):
         "correctAttempts": correct_attempts,
         "accuracy": accuracy
     }
+    
+def get_wrong_letters(student_name):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    SELECT target_letter, COUNT(*) as wrong_count
+    FROM practice_records
+    WHERE student_name = ?
+      AND is_correct = 0
+      AND target_letter IS NOT NULL
+      AND target_letter != ''
+    GROUP BY target_letter
+    ORDER BY wrong_count DESC
+    """, (student_name,))
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [row[0] for row in rows]

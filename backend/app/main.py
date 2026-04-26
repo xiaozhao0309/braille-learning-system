@@ -1,8 +1,9 @@
+import random
 from fastapi import FastAPI, Body   
 from app.braille.braille_map import get_braille, translate_word #获取字母对应的盲文
 from app.braille.rule_engine import evaluate_braille    #检验盲文
-from app.braille.feedback import generate_feedback  #反馈话术
-from app.database import init_db, save_record, get_summary  #数据库
+from app.braille.feedback import generate_feedback  #
+from app.database import init_db, save_record, get_summary, get_wrong_letters #数据库
 from fastapi.middleware.cors import CORSMiddleware  #连接前后端，后端允许跨域
 
 app = FastAPI()
@@ -53,17 +54,17 @@ def submit_practice(data: dict = Body(...)):
     student_name = data.get("student_name", "Anonymous")
     expected = data.get("expected", [])
     actual = data.get("actual", [])
-    print(f"Student: {student_name}, Expected: {expected}, Actual: {actual}") #confirm data
-
     result = evaluate_braille(expected, actual)
+    print(f"Student: {student_name}, Expected: {expected}, Actual: {actual}") #confirm data
 
     feedback = generate_feedback(
         result["errorType"],
         result["diff"]["missingDots"],
         result["diff"]["extraDots"]
     )
+    target_letter = data.get("target_letter", "")
      # 保存记录到数据库
-    save_record(student_name, expected, actual, result["isCorrect"])
+    save_record(student_name, target_letter, expected, actual, result["isCorrect"])
 
     return {
         **result,
@@ -74,3 +75,25 @@ def submit_practice(data: dict = Body(...)):
 @app.get("/stats/summary")
 def stats_summary(student_name: str):
     return get_summary(student_name)
+
+# 随机字母比例
+@app.get("/practice/personalized-target")
+def personalized_target(student_name: str):
+    wrong_letters = get_wrong_letters(student_name)
+
+    use_wrong_letter = wrong_letters and random.random() < 0.7
+
+    if use_wrong_letter:
+        letter = random.choice(wrong_letters)
+        reason = "frequently incorrect"
+    else:
+        letter = random.choice("abcdefghijklmnopqrstuvwxyz")
+        reason = "normal random practice"
+
+    dots = get_braille(letter)
+
+    return {
+        "letter": letter,
+        "dots": dots,
+        "reason": reason
+    }

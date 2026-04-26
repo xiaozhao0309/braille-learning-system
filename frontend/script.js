@@ -200,48 +200,58 @@ const randomModeBtn = document.getElementById("randomModeBtn");
     }
   }
 
-  async function generateRandomLetter() {
-    const randomLetter = letters[Math.floor(Math.random() * letters.length)];
-
-    resultBox.innerHTML = "<p>Generating random letter...</p>";
-    explanationBox.innerHTML = "<p>Please enter the Braille dots for the target letter.</p>";
-
-    try {
-      const response = await fetch(`${API_BASE}/braille/${randomLetter}`);
-
-      if (!response.ok) {
-        throw new Error("Failed to generate random letter.");
-      }
-
-      const data = await response.json();
-      const dots = data.dots || [];
-
-      setRandomMode(randomLetter, dots);
-
-      // Clear actual dots for the new question
-      actualDots = [];
-      document
-        .querySelectorAll('.dot[data-group="actual"]')
-        .forEach((button) => button.classList.remove("active"));
-
-      updateDotsText();
-
-      resultBox.innerHTML = `
-        <h3>Random Practice</h3>
-        <p><strong>New target generated.</strong></p>
-        <p>Enter the Braille pattern for letter <strong>${randomLetter.toUpperCase()}</strong> using the actual dots area.</p>
-      `;
-
-      explanationBox.innerHTML = `
-        <h3>Explanation</h3>
-        <p>Random practice is active. The system has generated the expected pattern automatically.</p>
-      `;
-    } catch (error) {
-      renderError(resultBox, error.message);
-      explanationBox.innerHTML = "";
-      targetLetterText.textContent = "Target: Error";
-    }
+async function generateRandomLetter() {
+  if (!currentStudentName) {
+    renderError(resultBox, "Please start a session first.");
+    explanationBox.innerHTML = "";
+    return;
   }
+
+  resultBox.innerHTML = "<p>Generating random letter...</p>";
+  explanationBox.innerHTML = "<p>Please enter the Braille dots for the target letter.</p>";
+
+  try {
+    const response = await fetch(
+      `${API_BASE}/practice/personalized-target?student_name=${encodeURIComponent(currentStudentName)}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to generate personalized letter.");
+    }
+
+    const data = await response.json();
+
+    const randomLetter = data.letter;
+    const dots = data.dots || [];
+    const reason = data.reason;
+
+    // ⭐关键：更新 random mode 状态
+    setRandomMode(randomLetter, dots);
+
+    // 清空 actual dots
+    actualDots = [];
+    document
+      .querySelectorAll('.dot[data-group="actual"]')
+      .forEach((button) => button.classList.remove("active"));
+
+    updateDotsText();
+
+    resultBox.innerHTML = `
+      <h3>Random Practice</h3>
+      <p><strong>New target generated.</strong></p>
+      <p>Enter the Braille pattern for letter <strong>${randomLetter.toUpperCase()}</strong>.</p>
+      <p><strong>Practice Reason:</strong> ${reason}</p>
+    `;
+
+    explanationBox.innerHTML = `
+      <h3>Explanation</h3>
+      <p>The system selected this letter based on your practice history.</p>
+    `;
+  } catch (error) {
+    renderError(resultBox, error.message);
+    explanationBox.innerHTML = "";
+  }
+}
 
   dotButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -334,6 +344,7 @@ const randomModeBtn = document.getElementById("randomModeBtn");
 
     const payload = {
       student_name: currentStudentName, //add student's name
+      target_letter: isRandomMode ? currentTarget : "",
       expected: sortDots(expectedToUse),
       actual: sortDots(actualDots)
     };
