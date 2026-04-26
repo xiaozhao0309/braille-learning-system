@@ -59,6 +59,7 @@ const randomModeBtn = document.getElementById("randomModeBtn");
   function renderResult(data) {
     resultBox.innerHTML = `
       <h3>Result</h3>
+      <p><strong>Student:</strong> ${currentStudentName}</p>
       <p><strong>Correct:</strong> ${data.isCorrect}</p>
       <p><strong>Error Type:</strong> ${data.errorType || "None"}</p>
       <p><strong>Missing Dots:</strong> ${
@@ -83,6 +84,7 @@ const randomModeBtn = document.getElementById("randomModeBtn");
   function renderStats(data) {
     statsBox.innerHTML = `
       <h3>Statistics</h3>
+      <p><strong>Student:</strong> ${currentStudentName}</p>
       <p><strong>Total Attempts:</strong> ${data.totalAttempts ?? 0}</p>
       <p><strong>Correct Attempts:</strong> ${data.correctAttempts ?? 0}</p>
       <p><strong>Accuracy:</strong> ${data.accuracy ?? 0}</p>
