@@ -50,8 +50,10 @@ def translate(word: str):
 # 提醒输入错误    
 @app.post("/practice/submit")
 def submit_practice(data: dict = Body(...)):
+    student_name = data.get("student_name", "Anonymous")
     expected = data.get("expected", [])
     actual = data.get("actual", [])
+    print(f"Student: {student_name}, Expected: {expected}, Actual: {actual}") #confirm data
 
     result = evaluate_braille(expected, actual)
 
@@ -61,7 +63,7 @@ def submit_practice(data: dict = Body(...)):
         result["diff"]["extraDots"]
     )
      # 保存记录到数据库
-    save_record(expected, actual, result["isCorrect"])
+    save_record(student_name, expected, actual, result["isCorrect"])
 
     return {
         **result,
@@ -70,5 +72,5 @@ def submit_practice(data: dict = Body(...)):
     
 # 统计正确率
 @app.get("/stats/summary")
-def stats_summary():
-    return get_summary()
+def stats_summary(student_name: str):
+    return get_summary(student_name)

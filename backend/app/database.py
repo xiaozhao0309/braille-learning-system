@@ -13,6 +13,7 @@ def init_db():
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS practice_records (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_name TEXT,
         expected TEXT,
         actual TEXT,
         is_correct INTEGER,
@@ -25,15 +26,16 @@ def init_db():
 
 
 # Save one practice record into database
-def save_record(expected, actual, is_correct):
+def save_record(student_name, expected, actual, is_correct):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
 
     # Insert a new record
     cursor.execute("""
-    INSERT INTO practice_records (expected, actual, is_correct, created_at)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO practice_records (student_name, expected, actual, is_correct, created_at)
+    VALUES (?, ?, ?, ?, ?)
     """, (
+        student_name,
         str(expected),
         str(actual),
         int(is_correct),
@@ -44,14 +46,19 @@ def save_record(expected, actual, is_correct):
     conn.close()
  
 # Get summary statistics from database   
-def get_summary():
+def get_summary(student_name):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
 
-    cursor.execute("SELECT COUNT(*) FROM practice_records")
+    cursor.execute(
+        "SELECT COUNT(*) FROM practice_records WHERE student_name = ?",
+        (student_name,))
     total_attempts = cursor.fetchone()[0]
 
-    cursor.execute("SELECT COUNT(*) FROM practice_records WHERE is_correct = 1")
+    cursor.execute(
+        "SELECT COUNT(*) FROM practice_records WHERE is_correct = 1 AND student_name = ?",
+        (student_name,)
+    )
     correct_attempts = cursor.fetchone()[0]
 
     conn.close()

@@ -10,6 +10,12 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentExpected = [];
   let isRandomMode = false;
 
+  let currentStudentName = "";
+
+  const studentNameInput = document.getElementById("studentName");
+  const startSessionBtn = document.getElementById("startSessionBtn");
+  const currentStudentDisplay = document.getElementById("currentStudentDisplay");
+
   const dotButtons = document.querySelectorAll(".dot");
 
   const expectedDotsText = document.getElementById("expectedDotsText");
@@ -172,7 +178,14 @@ const randomModeBtn = document.getElementById("randomModeBtn");
     statsBox.innerHTML = "<p>Loading statistics...</p>";
 
     try {
-      const response = await fetch(`${API_BASE}/stats/summary`);
+      if (!currentStudentName) {
+        renderError(statsBox, "Please start a session first.");
+        return;
+      }
+
+      const response = await fetch(
+        `${API_BASE}/stats/summary?student_name=${encodeURIComponent(currentStudentName)}`
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -238,6 +251,18 @@ const randomModeBtn = document.getElementById("randomModeBtn");
     });
   });
 
+  startSessionBtn.addEventListener("click", () => {
+    const enteredName = studentNameInput.value.trim();
+
+    if (!enteredName) {
+      alert("Please enter your name first.");
+      return;
+    }
+
+    currentStudentName = enteredName;
+    currentStudentDisplay.textContent = `Current Student: ${currentStudentName}`;
+  });
+
   clearExpectedBtn.addEventListener("click", () => {
     expectedDots = [];
 
@@ -301,7 +326,14 @@ const randomModeBtn = document.getElementById("randomModeBtn");
     resultBox.innerHTML = "<p>Loading result...</p>";
     explanationBox.innerHTML = "<p>Generating explanation...</p>";
 
+    if (!currentStudentName) {
+      renderError(resultBox, "Please start a session by entering your name.");
+      explanationBox.innerHTML = "";
+      return;
+    }
+
     const payload = {
+      student_name: currentStudentName, //add student's name
       expected: sortDots(expectedToUse),
       actual: sortDots(actualDots)
     };
