@@ -68,11 +68,14 @@ def submit_practice(data: dict = Body(...)):
     # Week 6: generate a more detailed AI-assisted explanation
     # At this stage, this is still local rule-based logic.
     # It prepares the project structure for real AI integration in Week 7.
+    
+    wrong_letters = get_wrong_letters(student_name)
     ai_explanation = generate_ai_explanation(
         target_letter,
         expected,
         actual,
-        result
+        result,
+        wrong_letters 
     )
      # 保存记录到数据库
     save_record(student_name, target_letter, expected, actual, result["isCorrect"])

@@ -5,7 +5,7 @@
 # In Week 7, this module can be replaced or extended with a real AI service.
 
 
-def generate_ai_explanation(target_letter, expected, actual, result):
+def generate_ai_explanation(target_letter, expected, actual, result, wrong_letters=None):
     """
     Generate a detailed explanation for a Braille practice attempt.
 
@@ -25,21 +25,36 @@ def generate_ai_explanation(target_letter, expected, actual, result):
 
     missing_dots = diff.get("missingDots", [])
     extra_dots = diff.get("extraDots", [])
+        
+    # Week 6 upgrade: check if this letter is frequently incorrect for the student
+    is_frequent_mistake = False
+
+    if target_letter and wrong_letters:
+        if target_letter in wrong_letters:
+            is_frequent_mistake = True
 
     # If the answer is correct, give positive feedback
     if is_correct:
         return {
-            "explanation": "Your answer is correct. You selected the required Braille dots accurately.",
-            "learningTip": "Try to remember this dot pattern and move to another letter.",
+            # "explanation": "Your answer is correct. You selected the required Braille dots accurately.",
+            # "learningTip": "Try to remember this dot pattern and move to another letter.",
+            # "nextStep": "Continue practicing with a new letter.",
+            "explanation": f"Correct. The letter '{target_letter}' uses dots {expected}.",
+            "learningTip": "Try to remember this pattern visually and physically.",
             "nextStep": "Continue practicing with a new letter."
         }
 
     # If the user missed required dots
     if error_type == "missing_dot":
+        message = f"You missed dot(s): {missing_dots}."
+
+        if is_frequent_mistake:
+            message += " This is a letter you often find difficult."
+
         return {
-            "explanation": f"You missed dot(s): {missing_dots}. These dots are required for the correct Braille pattern.",
-            "learningTip": "Compare the target letter with the selected dots and check which required dots are missing.",
-            "nextStep": "Try the same letter again and include all required dots."
+            "explanation": message,
+            "learningTip": "Compare the target letter with the correct dots.",
+            "nextStep": "Try this letter again."
         }
 
     # If the user selected extra dots
