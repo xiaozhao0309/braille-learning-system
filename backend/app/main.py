@@ -2,7 +2,8 @@ import random
 from fastapi import FastAPI, Body   
 from app.braille.braille_map import get_braille, translate_word #获取字母对应的盲文
 from app.braille.rule_engine import evaluate_braille    #检验盲文
-from app.braille.feedback import generate_feedback  #
+from app.braille.feedback import generate_feedback  #反馈内容
+from app.braille.ai_feedback import generate_ai_explanation  # Week 6 接ai反馈
 from app.database import init_db, save_record, get_summary, get_wrong_letters #数据库
 from fastapi.middleware.cors import CORSMiddleware  #连接前后端，后端允许跨域
 
@@ -63,12 +64,23 @@ def submit_practice(data: dict = Body(...)):
         result["diff"]["extraDots"]
     )
     target_letter = data.get("target_letter", "")
+    
+    # Week 6: generate a more detailed AI-assisted explanation
+    # At this stage, this is still local rule-based logic.
+    # It prepares the project structure for real AI integration in Week 7.
+    ai_explanation = generate_ai_explanation(
+        target_letter,
+        expected,
+        actual,
+        result
+    )
      # 保存记录到数据库
     save_record(student_name, target_letter, expected, actual, result["isCorrect"])
 
     return {
         **result,
-        "feedback": feedback
+        "feedback": feedback,
+        "aiExplanation": ai_explanation  # Week 6: send AI-assisted explanation to frontend
     }
     
 # 统计正确率

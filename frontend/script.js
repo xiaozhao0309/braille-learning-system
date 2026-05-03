@@ -57,6 +57,9 @@ const randomModeBtn = document.getElementById("randomModeBtn");
   }
 
   function renderResult(data) {
+    // Week 6: get AI-assisted explanation from backend response
+    const aiExplanation = data.aiExplanation || {};
+
     resultBox.innerHTML = `
       <h3>Result</h3>
       <p><strong>Student:</strong> ${currentStudentName}</p>
@@ -74,10 +77,31 @@ const randomModeBtn = document.getElementById("randomModeBtn");
       }</p>
     `;
 
+    // Week 6: display both basic feedback and AI-assisted explanation
     explanationBox.innerHTML = `
-      <h3>Explanation</h3>
-      <p><strong>Message:</strong> ${data.feedback?.message || "No message"}</p>
-      <p><strong>Suggestion:</strong> ${data.feedback?.suggestion || "No suggestion"}</p>
+      <h3>AI-Assisted Explanation</h3>
+
+      <p><strong>Basic Message:</strong> ${
+        data.feedback?.message || "No message"
+      }</p>
+
+      <p><strong>Basic Suggestion:</strong> ${
+        data.feedback?.suggestion || "No suggestion"
+      }</p>
+
+      <hr />
+
+      <p><strong>Explanation:</strong> ${
+        aiExplanation.explanation || "No explanation"
+      }</p>
+
+      <p><strong>Learning Tip:</strong> ${
+        aiExplanation.learningTip || "No learning tip"
+      }</p>
+
+      <p><strong>Next Step:</strong> ${
+        aiExplanation.nextStep || "No next step"
+      }</p>
     `;
   }
 
