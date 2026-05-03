@@ -56,6 +56,39 @@ const randomModeBtn = document.getElementById("randomModeBtn");
         : "Selected: None";
   }
 
+  // Week 6 upgrade: text-to-speech for accessibility
+  function speak(text) {
+    const synth = window.speechSynthesis;
+
+    function speakWithVoice() {
+      const voices = synth.getVoices();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+
+      // ⭐ 固定使用 Samantha（你选的声音）
+      const selectedVoice =
+        voices.find(v => v.name === "Samantha") ||   // Prefer using Samantha
+        voices.find(v => v.lang === "en-US");        // or fallback
+
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
+
+      utterance.rate = 0.95;   // a bit slower
+      utterance.pitch = 1.1;   // a bit higher
+
+      synth.cancel();          // avoid overlap
+      synth.speak(utterance);
+    }
+
+    // Resolve the issue of voices not loading yet
+    if (synth.getVoices().length === 0) {
+      synth.onvoiceschanged = speakWithVoice;
+    } else {
+      speakWithVoice();
+    }
+  }
+
   function renderResult(data) {
     // Week 6: get AI-assisted explanation from backend response
     const aiExplanation = data.aiExplanation || {};
@@ -103,6 +136,16 @@ const randomModeBtn = document.getElementById("randomModeBtn");
         aiExplanation.nextStep || "No next step"
       }</p>
     `;
+    // Week 6: voice feedback
+    const voiceText = `
+    Result: ${data.isCorrect ? "Correct" : "Incorrect"}.
+    ${data.feedback?.message || ""}
+    ${data.feedback?.suggestion || ""}
+    ${data.aiExplanation?.learningTip || ""}
+    ${data.aiExplanation?.nextStep || ""}
+    `;
+
+    speak(voiceText);
   }
 
   function renderStats(data) {
@@ -404,4 +447,15 @@ async function generateRandomLetter() {
 
   updateDotsText();
   updateModeButtons();
+
+  // ===== Voice Test (Week 6 only) =====
+  // window.speechSynthesis.onvoiceschanged = () => {
+  //   const voices = speechSynthesis.getVoices();
+
+  //   console.log("Available voices:");
+
+  //   voices.forEach((voice, index) => {
+  //     console.log(index, voice.name, voice.lang);
+  //   });
+  // };
 });
