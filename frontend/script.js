@@ -95,6 +95,9 @@ const randomModeBtn = document.getElementById("randomModeBtn");
 
     resultBox.innerHTML = `
       <h3>Result</h3>
+      <p><strong>Feedback Source:</strong> ${
+        aiExplanation.source || "unknown"
+      }</p>
       <p><strong>Student:</strong> ${currentStudentName}</p>
       <p><strong>Correct:</strong> ${data.isCorrect}</p>
       <p><strong>Error Type:</strong> ${data.errorType || "None"}</p>

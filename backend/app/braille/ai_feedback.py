@@ -1,81 +1,190 @@
 # ai_feedback.py
-# This file provides a local AI-assisted explanation module.
-# At this stage, it does not call a real AI API.
-# It uses rule-based logic to generate more detailed learning feedback.
-# In Week 7, this module can be replaced or extended with a real AI service.
+# Week 7 upgrade:
+# This module supports AI-assisted feedback.
+# If no real AI API is available, it will still use local rule-based feedback.
 
+import os
+import json
+from anthropic import Anthropic
 
-def generate_ai_explanation(target_letter, expected, actual, result, wrong_letters=None):
-    """
-    Generate a detailed explanation for a Braille practice attempt.
+client = Anthropic(
+    api_key=os.getenv("ANTHROPIC_API_KEY")
+)
 
-    Parameters:
-    target_letter: the letter generated in random practice mode
-    expected: the correct Braille dots
-    actual: the dots selected by the user
-    result: the evaluation result returned by rule_engine.py
-
-    Returns:
-    A dictionary containing explanation, learning tip, and next step.
-    """
-
+def generate_rule_based_explanation(target_letter, expected, actual, result, wrong_letters=None):
     is_correct = result.get("isCorrect", False)
     error_type = result.get("errorType", "")
     diff = result.get("diff", {})
 
     missing_dots = diff.get("missingDots", [])
     extra_dots = diff.get("extraDots", [])
-        
-    # Week 6 upgrade: check if this letter is frequently incorrect for the student
-    is_frequent_mistake = False
 
+    is_frequent_mistake = False
     if target_letter and wrong_letters:
         if target_letter in wrong_letters:
             is_frequent_mistake = True
 
-    # If the answer is correct, give positive feedback
     if is_correct:
         return {
-            # "explanation": "Your answer is correct. You selected the required Braille dots accurately.",
-            # "learningTip": "Try to remember this dot pattern and move to another letter.",
-            # "nextStep": "Continue practicing with a new letter.",
+            "source": "rule-based",
             "explanation": f"Correct. The letter '{target_letter}' uses dots {expected}.",
             "learningTip": "Try to remember this pattern visually and physically.",
             "nextStep": "Continue practicing with a new letter."
         }
 
-    # If the user missed required dots
     if error_type == "missing_dot":
         message = f"You missed dot(s): {missing_dots}."
-
         if is_frequent_mistake:
             message += " This is a letter you often find difficult."
 
         return {
+            "source": "rule-based",
             "explanation": message,
-            "learningTip": "Compare the target letter with the correct dots.",
-            "nextStep": "Try this letter again."
+            "learningTip": "Compare your selected dots with the correct Braille pattern.",
+            "nextStep": "Try this letter again and focus on the missing dots."
         }
 
-    # If the user selected extra dots
     if error_type == "extra_dot":
         return {
-            "explanation": f"You selected extra dot(s): {extra_dots}. These dots should not be included in this Braille pattern.",
-            "learningTip": "Focus on selecting only the dots that belong to the target letter.",
+            "source": "rule-based",
+            "explanation": f"You selected extra dot(s): {extra_dots}. These dots should not be included.",
+            "learningTip": "Focus on selecting only the dots required for the target letter.",
             "nextStep": "Remove the extra dots and try again."
         }
 
-    # If the user both missed dots and selected extra dots
-    if error_type == "mixed_error":
+    if error_type == "incorrect_combination":
         return {
-            "explanation": f"Your answer has both missing dot(s): {missing_dots} and extra dot(s): {extra_dots}.",
-            "learningTip": "Check the full Braille pattern carefully before submitting.",
-            "nextStep": "Practice this letter again and compare each dot position one by one."
+            "source": "rule-based",
+            "explanation": f"Your answer has missing dot(s): {missing_dots} and extra dot(s): {extra_dots}.",
+            "learningTip": "Check each dot position carefully before submitting.",
+            "nextStep": "Practice this letter again step by step."
         }
 
-    # Default feedback if the error type is unknown
     return {
+        "source": "rule-based",
         "explanation": "The answer is not correct, but the system could not identify a specific error type.",
         "learningTip": "Review the correct Braille pattern and try again.",
         "nextStep": "Repeat this practice item."
     }
+
+
+def generate_ai_prompt(target_letter, expected, actual, result, wrong_letters=None):
+    return f"""
+You are a Braille learning assistant.
+
+Please generate simple feedback for a beginner learner.
+
+Target letter: {target_letter}
+Correct Braille dots: {expected}
+Student selected dots: {actual}
+Evaluation result: {result}
+Frequently incorrect letters for this student: {wrong_letters}
+
+Please return ONLY valid JSON.
+
+Format:
+{{
+  "explanation": "...",
+  "learningTip": "...",
+  "nextStep": "..."
+}}
+
+Do not include markdown.
+Do not include headings.
+Do not include bullet points.
+Return JSON only.
+
+Use simple English.
+Do not be too long.
+"""
+
+
+def generate_real_ai_explanation(target_letter, expected, actual, result, wrong_letters=None):
+    print("=== TRYING REAL AI ===")
+
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    print("API KEY EXISTS:", bool(api_key))
+
+    if not api_key:
+        return None
+
+    prompt = generate_ai_prompt(
+        target_letter,
+        expected,
+        actual,
+        result,
+        wrong_letters
+    )
+
+    try:
+        print("=== SENDING REQUEST TO CLAUDE ===")
+
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=200,
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
+        )
+
+        print("=== RESPONSE RECEIVED ===")
+
+        ai_text = response.content[0].text.strip()
+        
+        # Remove markdown code block if Claude returns ```json ... ```
+        if ai_text.startswith("```"):
+            ai_text = ai_text.replace("```json", "")
+            ai_text = ai_text.replace("```", "")
+            ai_text = ai_text.strip()
+        try:
+            ai_data = json.loads(ai_text)
+        except Exception as e:
+            print("JSON parse error:", e)
+            print("Raw AI text:", ai_text)
+
+            return {
+                "source": "real-ai",
+                "explanation": ai_text,
+                "learningTip": "Generated by Claude AI.",
+                "nextStep": "Continue practicing."
+            }
+
+        return {
+            "source": "real-ai",
+            "explanation": ai_data.get("explanation", ""),
+            "learningTip": ai_data.get("learningTip", ""),
+            "nextStep": ai_data.get("nextStep", "")
+        }
+
+    except Exception as e:
+        print("AI API error:", e)
+        return None
+
+def generate_ai_explanation(target_letter, expected, actual, result, wrong_letters=None):
+    """
+    Main function used by main.py.
+    It first tries to use real AI.
+    If real AI is not available, it falls back to rule-based feedback.
+    """
+
+    real_ai_result = generate_real_ai_explanation(
+        target_letter,
+        expected,
+        actual,
+        result,
+        wrong_letters
+    )
+
+    if real_ai_result:
+        return real_ai_result
+
+    return generate_rule_based_explanation(
+        target_letter,
+        expected,
+        actual,
+        result,
+        wrong_letters
+    )
