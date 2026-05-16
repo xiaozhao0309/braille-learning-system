@@ -1,8 +1,10 @@
 import sqlite3
+import os
 from datetime import datetime
 
 # Database file name
-DB_NAME = "braille.db"
+#DB_NAME = "braille.db"
+DB_NAME = os.getenv("DB_NAME", "braille.db")
 
 # Initialize database and create table if it does not exist
 def init_db():
