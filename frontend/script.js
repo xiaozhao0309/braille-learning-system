@@ -390,6 +390,8 @@ document.addEventListener("DOMContentLoaded", () => {
         <h3>Explanation</h3>
         <p>The system selected this letter based on your practice history.</p>
       `;
+
+      speak(`The random letter is ${randomLetter.toUpperCase()}.`);
     } catch (error) {
       renderError(resultBox, error.message);
       explanationBox.innerHTML = "";
