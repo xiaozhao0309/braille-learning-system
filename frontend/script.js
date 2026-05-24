@@ -33,11 +33,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const explanationBox = document.getElementById("explanationBox");
   const statsBox = document.getElementById("statsBox");
 
-const targetLetterText = document.getElementById("targetLetterText");
-const expectedCell = document.getElementById("expectedCell");
+  const targetLetterText = document.getElementById("targetLetterText");
+  const expectedCell = document.getElementById("expectedCell");
 
-const manualModeBtn = document.getElementById("manualModeBtn");
-const randomModeBtn = document.getElementById("randomModeBtn");
+  const manualModeBtn = document.getElementById("manualModeBtn");
+  const randomModeBtn = document.getElementById("randomModeBtn");
+
+  const loadHistoryBtn = document.getElementById("loadHistoryBtn");
+  const historyBox = document.getElementById("historyBox");
 
   function sortDots(dots) {
     return [...dots].sort((a, b) => a - b);
@@ -163,6 +166,44 @@ const randomModeBtn = document.getElementById("randomModeBtn");
     `;
   }
 
+  function renderHistory(data) {
+    const history = data.history || [];
+
+    if (history.length === 0) {
+      historyBox.innerHTML = `
+        <h3>Recent Attempts</h3>
+        <p>No practice history found for this student.</p>
+      `;
+      return;
+    }
+
+    const historyHtml = history
+      .map((item, index) => {
+        const target = item.targetLetter
+          ? item.targetLetter.toUpperCase()
+          : "Manual Practice";
+
+        const status = item.isCorrect ? "Correct" : "Incorrect";
+
+        return `
+          <div class="history-item">
+            <p><strong>${index + 1}. Target:</strong> ${target}</p>
+            <p><strong>Status:</strong> ${status}</p>
+            <p><strong>Expected Dots:</strong> ${item.expected || "None"}</p>
+            <p><strong>Actual Dots:</strong> ${item.actual || "None"}</p>
+            <p><strong>Time:</strong> ${item.createdAt || "Unknown"}</p>
+            <hr />
+          </div>
+        `;
+      })
+      .join("");
+
+    historyBox.innerHTML = `
+      <h3>Recent Attempts</h3>
+      ${historyHtml}
+    `;
+  }
+
   function renderError(box, message) {
     box.innerHTML = `<p><strong>Error:</strong> ${message}</p>`;
   }
@@ -274,58 +315,86 @@ const randomModeBtn = document.getElementById("randomModeBtn");
     }
   }
 
-async function generateRandomLetter() {
-  if (!currentStudentName) {
-    renderError(resultBox, "Please start a session first.");
-    explanationBox.innerHTML = "";
-    return;
+  async function loadHistory() {
+    historyBox.innerHTML = "<p>Loading recent attempts...</p>";
+
+    try {
+      if (!currentStudentName) {
+        renderError(historyBox, "Please start a session first.");
+        return;
+      }
+
+      const response = await fetch(
+        `${API_BASE}/stats/history?student_name=${encodeURIComponent(
+          currentStudentName
+        )}&limit=10`
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        renderError(historyBox, errorText);
+        return;
+      }
+
+      const data = await response.json();
+      renderHistory(data);
+    } catch (error) {
+      renderError(historyBox, error.message);
+    }
   }
 
-  resultBox.innerHTML = "<p>Generating random letter...</p>";
-  explanationBox.innerHTML = "<p>Please enter the Braille dots for the target letter.</p>";
-
-  try {
-    const response = await fetch(
-      `${API_BASE}/practice/personalized-target?student_name=${encodeURIComponent(currentStudentName)}`
-    );
-
-    if (!response.ok) {
-      throw new Error("Failed to generate personalized letter.");
+  async function generateRandomLetter() {
+    if (!currentStudentName) {
+      renderError(resultBox, "Please start a session first.");
+      explanationBox.innerHTML = "";
+      return;
     }
 
-    const data = await response.json();
+    resultBox.innerHTML = "<p>Generating random letter...</p>";
+    explanationBox.innerHTML = "<p>Please enter the Braille dots for the target letter.</p>";
 
-    const randomLetter = data.letter;
-    const dots = data.dots || [];
-    const reason = data.reason;
+    try {
+      const response = await fetch(
+        `${API_BASE}/practice/personalized-target?student_name=${encodeURIComponent(currentStudentName)}`
+      );
 
-    // ⭐关键：更新 random mode 状态
-    setRandomMode(randomLetter, dots);
+      if (!response.ok) {
+        throw new Error("Failed to generate personalized letter.");
+      }
 
-    // 清空 actual dots
-    actualDots = [];
-    document
-      .querySelectorAll('.dot[data-group="actual"]')
-      .forEach((button) => button.classList.remove("active"));
+      const data = await response.json();
 
-    updateDotsText();
+      const randomLetter = data.letter;
+      const dots = data.dots || [];
+      const reason = data.reason;
 
-    resultBox.innerHTML = `
-      <h3>Random Practice</h3>
-      <p><strong>New target generated.</strong></p>
-      <p>Enter the Braille pattern for letter <strong>${randomLetter.toUpperCase()}</strong>.</p>
-      <p><strong>Practice Reason:</strong> ${reason}</p>
-    `;
+      // ⭐关键：更新 random mode 状态
+      setRandomMode(randomLetter, dots);
 
-    explanationBox.innerHTML = `
-      <h3>Explanation</h3>
-      <p>The system selected this letter based on your practice history.</p>
-    `;
-  } catch (error) {
-    renderError(resultBox, error.message);
-    explanationBox.innerHTML = "";
+      // 清空 actual dots
+      actualDots = [];
+      document
+        .querySelectorAll('.dot[data-group="actual"]')
+        .forEach((button) => button.classList.remove("active"));
+
+      updateDotsText();
+
+      resultBox.innerHTML = `
+        <h3>Random Practice</h3>
+        <p><strong>New target generated.</strong></p>
+        <p>Enter the Braille pattern for letter <strong>${randomLetter.toUpperCase()}</strong>.</p>
+        <p><strong>Practice Reason:</strong> ${reason}</p>
+      `;
+
+      explanationBox.innerHTML = `
+        <h3>Explanation</h3>
+        <p>The system selected this letter based on your practice history.</p>
+      `;
+    } catch (error) {
+      renderError(resultBox, error.message);
+      explanationBox.innerHTML = "";
+    }
   }
-}
 
   dotButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -442,6 +511,7 @@ async function generateRandomLetter() {
       const data = await response.json();
       renderResult(data);
       loadStats();
+      loadHistory();
     } catch (error) {
       renderError(resultBox, error.message);
       explanationBox.innerHTML = "";
@@ -449,6 +519,7 @@ async function generateRandomLetter() {
   });
 
   loadStatsBtn.addEventListener("click", loadStats);
+  loadHistoryBtn.addEventListener("click", loadHistory);
 
   updateDotsText();
   updateModeButtons();
