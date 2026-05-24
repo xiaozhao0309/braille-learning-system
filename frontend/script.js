@@ -406,6 +406,17 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // startSessionBtn.addEventListener("click", () => {
+  //   const enteredName = studentNameInput.value.trim();
+
+  //   if (!enteredName) {
+  //     alert("Please enter your name first.");
+  //     return;
+  //   }
+
+  //   currentStudentName = enteredName;
+  //   currentStudentDisplay.textContent = `Current Student: ${currentStudentName}`;
+  // });
   startSessionBtn.addEventListener("click", () => {
     const enteredName = studentNameInput.value.trim();
 
@@ -416,6 +427,44 @@ document.addEventListener("DOMContentLoaded", () => {
 
     currentStudentName = enteredName;
     currentStudentDisplay.textContent = `Current Student: ${currentStudentName}`;
+
+    // Reset practice state when switching student
+    expectedDots = [];
+    actualDots = [];
+    currentTarget = null;
+    currentExpected = [];
+    isRandomMode = false;
+
+    // Clear dot selections
+    document.querySelectorAll(".dot").forEach((button) => {
+      button.classList.remove("active");
+    });
+
+    // Reset mode and target display
+    targetLetterText.textContent = "Target: None";
+    updateDotsText();
+    updateModeButtons();
+
+    // Clear previous result and explanation
+    resultBox.innerHTML = `
+      <p>Result will appear here.</p>
+    `;
+
+    explanationBox.innerHTML = `
+      <p>AI-assisted explanation will appear here.</p>
+    `;
+
+    // Clear old statistics
+    statsBox.innerHTML = `
+      <p>Total Attempts: -</p>
+      <p>Correct Attempts: -</p>
+      <p>Accuracy: -</p>
+    `;
+
+    // Clear old history
+    historyBox.innerHTML = `
+      <p>No recent attempts loaded yet.</p>
+    `;
   });
 
   clearExpectedBtn.addEventListener("click", () => {
