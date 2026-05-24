@@ -4,7 +4,7 @@ from app.braille.braille_map import get_braille, translate_word #获取字母对
 from app.braille.rule_engine import evaluate_braille    #检验盲文
 from app.braille.feedback import generate_feedback  #反馈内容
 from app.braille.ai_feedback import generate_ai_explanation  # Week 6 接ai反馈
-from app.database import init_db, save_record, get_summary, get_wrong_letters #数据库
+from app.database import init_db, save_record, get_summary, get_wrong_letters, get_recent_attempts #数据库
 from fastapi.middleware.cors import CORSMiddleware  #连接前后端，后端允许跨域
 
 app = FastAPI()
@@ -90,6 +90,14 @@ def submit_practice(data: dict = Body(...)):
 @app.get("/stats/summary")
 def stats_summary(student_name: str):
     return get_summary(student_name)
+
+# 获取最近练习记录
+@app.get("/stats/history")
+def stats_history(student_name: str, limit: int = 10):
+    return {
+        "studentName": student_name,
+        "history": get_recent_attempts(student_name, limit)
+    }
 
 # 随机字母比例
 @app.get("/practice/personalized-target")

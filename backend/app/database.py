@@ -76,7 +76,8 @@ def get_summary(student_name):
         "correctAttempts": correct_attempts,
         "accuracy": accuracy
     }
-    
+  
+# Get wrong letters from database     
 def get_wrong_letters(student_name):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -96,3 +97,31 @@ def get_wrong_letters(student_name):
     conn.close()
 
     return [row[0] for row in rows]
+
+# Get recent attempts   
+def get_recent_attempts(student_name, limit=10):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    SELECT target_letter, expected, actual, is_correct, created_at
+    FROM practice_records
+    WHERE student_name = ?
+    ORDER BY created_at DESC
+    LIMIT ?
+    """, (student_name, limit))
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    history = []
+    for row in rows:
+        history.append({
+            "targetLetter": row[0],
+            "expected": row[1],
+            "actual": row[2],
+            "isCorrect": bool(row[3]),
+            "createdAt": row[4]
+        })
+
+    return history
