@@ -1,17 +1,22 @@
-# ai_feedback.py
-# Week 7 upgrade:
-# This module supports AI-assisted feedback.
-# If no real AI API is available, it will still use local rule-based feedback.
-
-import os
+# Generate AI-assisted Braille feedback with a rule-based fallback.
 import json
+import os
+
 from anthropic import Anthropic
 
 client = Anthropic(
     api_key=os.getenv("ANTHROPIC_API_KEY")
 )
 
-def generate_rule_based_explanation(target_letter, expected, actual, result, wrong_letters=None):
+
+#def generate_rule_based_explanation(target_letter, expected, actual, result, wrong_letters=None):
+def generate_rule_based_explanation(
+    target_letter,
+    expected,
+    actual,
+    result,
+    wrong_letters=None,
+):
     is_correct = result.get("isCorrect", False)
     error_type = result.get("errorType", "")
     diff = result.get("diff", {})
@@ -20,6 +25,7 @@ def generate_rule_based_explanation(target_letter, expected, actual, result, wro
     extra_dots = diff.get("extraDots", [])
 
     is_frequent_mistake = False
+
     if target_letter and wrong_letters:
         if target_letter in wrong_letters:
             is_frequent_mistake = True
@@ -99,11 +105,18 @@ Do not be too long.
 """
 
 
-def generate_real_ai_explanation(target_letter, expected, actual, result, wrong_letters=None):
-    print("=== TRYING REAL AI ===")
+def generate_real_ai_explanation(
+    target_letter,
+    expected,
+    actual,
+    result,
+    wrong_letters=None,
+):
+    """Generate feedback using the configured Claude model."""
+    print("Trying real AI feedback.")
 
     api_key = os.getenv("ANTHROPIC_API_KEY")
-    print("API KEY EXISTS:", bool(api_key))
+    print("API key exists:", bool(api_key))
 
     if not api_key:
         return None
@@ -117,7 +130,7 @@ def generate_real_ai_explanation(target_letter, expected, actual, result, wrong_
     )
 
     try:
-        print("=== SENDING REQUEST TO CLAUDE ===")
+        print("Sending request to Claude.")
 
         response = client.messages.create(
             model="claude-haiku-4-5-20251001",
@@ -130,11 +143,11 @@ def generate_real_ai_explanation(target_letter, expected, actual, result, wrong_
             ]
         )
 
-        print("=== RESPONSE RECEIVED ===")
+        print("AI response received.")
 
         ai_text = response.content[0].text.strip()
         
-        # Remove markdown code block if Claude returns ```json ... ```
+        # Remove Markdown code fences if the response contains them.
         if ai_text.startswith("```"):
             ai_text = ai_text.replace("```json", "")
             ai_text = ai_text.replace("```", "")
@@ -165,9 +178,7 @@ def generate_real_ai_explanation(target_letter, expected, actual, result, wrong_
 
 def generate_ai_explanation(target_letter, expected, actual, result, wrong_letters=None):
     """
-    Main function used by main.py.
-    It first tries to use real AI.
-    If real AI is not available, it falls back to rule-based feedback.
+    Generate AI feedback and use rule-based feedback when AI is unavailable.
     """
 
     real_ai_result = generate_real_ai_explanation(

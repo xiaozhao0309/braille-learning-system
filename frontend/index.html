@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
   <title>Braille Learning System</title>
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -15,93 +18,188 @@
       <h2>Student Session</h2>
 
       <label for="studentName">Student Name</label>
+
       <input
-        type="text"
         id="studentName"
+        type="text"
         placeholder="Enter your name"
       />
 
-      <button id="startSessionBtn" type="button">Start Session</button>
+      <button id="startSessionBtn" type="button">
+        Start Session
+      </button>
 
       <p id="currentStudentDisplay">Current Student: None</p>
     </section>
-    
+
     <section class="card">
       <h2>Practice Submission</h2>
 
-      <!-- Mode -->
-    <h3>Mode</h3>
-    <div class="mode-switch">
-      <button id="manualModeBtn" class="mode-btn active">Manual</button>
-      <button id="randomModeBtn" class="mode-btn">Random</button>
-    </div>
+      <!-- Practice mode controls -->
+      <h3>Mode</h3>
 
-    <h3>Random Practice</h3>
-    <button id="generateBtn" class="secondary-btn disabled-btn" disabled>
-      Generate Random Letter
-    </button>
-    <p id="targetLetterText">Target: None</p>
-    <p class="hint">
-      Tip: In random mode, the system generates the expected dots automatically.
-    </p>
+      <div class="mode-switch">
+        <button id="manualModeBtn" class="mode-btn active">
+          Manual
+        </button>
 
-      <!-- Expected -->
+        <button id="randomModeBtn" class="mode-btn">
+          Random
+        </button>
+      </div>
+
+      <h3>Random Practice</h3>
+
+      <button
+        id="generateBtn"
+        class="secondary-btn disabled-btn"
+        disabled
+      >
+        Generate Random Letter
+      </button>
+
+      <p id="targetLetterText">Target: None</p>
+
+      <p class="hint">
+        Tip: In random mode, the system generates the expected dots
+        automatically.
+      </p>
+
+      <!-- Expected Braille input -->
       <div class="braille-input-section">
         <h3>Expected dots</h3>
+
         <div class="braille-cell" id="expectedCell">
-          <button class="dot" data-group="expected" data-dot="1"></button>
-          <button class="dot" data-group="expected" data-dot="4"></button>
-          <button class="dot" data-group="expected" data-dot="2"></button>
-          <button class="dot" data-group="expected" data-dot="5"></button>
-          <button class="dot" data-group="expected" data-dot="3"></button>
-          <button class="dot" data-group="expected" data-dot="6"></button>
+          <button
+            class="dot"
+            data-group="expected"
+            data-dot="1"
+          ></button>
+
+          <button
+            class="dot"
+            data-group="expected"
+            data-dot="4"
+          ></button>
+
+          <button
+            class="dot"
+            data-group="expected"
+            data-dot="2"
+          ></button>
+
+          <button
+            class="dot"
+            data-group="expected"
+            data-dot="5"
+          ></button>
+
+          <button
+            class="dot"
+            data-group="expected"
+            data-dot="3"
+          ></button>
+
+          <button
+            class="dot"
+            data-group="expected"
+            data-dot="6"
+          ></button>
         </div>
+
         <p id="expectedDotsText">Selected: None</p>
-        <button id="clearExpectedBtn" class="secondary-btn">Clear Expected</button>
+
+        <button id="clearExpectedBtn" class="secondary-btn">
+          Clear Expected
+        </button>
       </div>
 
-      <!-- Actual -->
+      <!-- Actual Braille input -->
       <div class="braille-input-section">
         <h3>Actual dots</h3>
+
         <div class="braille-cell" id="actualCell">
-          <button class="dot" data-group="actual" data-dot="1"></button>
-          <button class="dot" data-group="actual" data-dot="4"></button>
-          <button class="dot" data-group="actual" data-dot="2"></button>
-          <button class="dot" data-group="actual" data-dot="5"></button>
-          <button class="dot" data-group="actual" data-dot="3"></button>
-          <button class="dot" data-group="actual" data-dot="6"></button>
+          <button
+            class="dot"
+            data-group="actual"
+            data-dot="1"
+          ></button>
+
+          <button
+            class="dot"
+            data-group="actual"
+            data-dot="4"
+          ></button>
+
+          <button
+            class="dot"
+            data-group="actual"
+            data-dot="2"
+          ></button>
+
+          <button
+            class="dot"
+            data-group="actual"
+            data-dot="5"
+          ></button>
+
+          <button
+            class="dot"
+            data-group="actual"
+            data-dot="3"
+          ></button>
+
+          <button
+            class="dot"
+            data-group="actual"
+            data-dot="6"
+          ></button>
         </div>
+
         <p id="actualDotsText">Selected: None</p>
-        <button id="clearActualBtn" class="secondary-btn">Clear Actual</button>
+
+        <button id="clearActualBtn" class="secondary-btn">
+          Clear Actual
+        </button>
       </div>
 
-      <!-- Submit -->
-      <button id="submitBtn">Submit Practice</button>
+      <!-- Practice submission -->
+      <button id="submitBtn">
+        Submit Practice
+      </button>
 
-      <!-- Result -->
+      <!-- Evaluation result -->
       <div class="result-box" id="resultBox">
         <p>Result will appear here.</p>
       </div>
 
-      <!-- Explanation -->
+      <!-- AI-assisted explanation -->
       <div class="result-box" id="explanationBox">
         <p>AI-assisted explanation will appear here.</p>
       </div>
     </section>
 
     <section class="card">
-      <!-- Statistics -->
+      <!-- Learning statistics -->
       <h2>Learning Statistics</h2>
-      <button id="loadStatsBtn">Load Stats Summary</button>
+
+      <button id="loadStatsBtn">
+        Load Stats Summary
+      </button>
+
       <div class="result-box" id="statsBox">
         <p>Total Attempts: -</p>
         <p>Correct Attempts: -</p>
         <p>Accuracy: -</p>
       </div>
 
-      <!-- History -->
+      <!-- Recent practice history -->
       <h2>Recent Practice History</h2>
-      <button id="loadHistoryBtn">Load Recent Attempts</button>
+
+      <button id="loadHistoryBtn">
+        Load Recent Attempts
+      </button>
+
       <div class="result-box" id="historyBox">
         <p>No recent attempts loaded yet.</p>
       </div>

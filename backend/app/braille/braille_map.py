@@ -1,4 +1,5 @@
-# braille_map.py
+"""Provide English Braille mappings and translation functions."""
+
 
 BRAILLE_MAP = {
     "a": [1],
@@ -31,16 +32,23 @@ BRAILLE_MAP = {
 
 
 def get_braille(letter: str):
+    """Return the Braille dots for a single English letter."""
     return BRAILLE_MAP.get(letter.lower())
 
 
 def translate_word(word: str):
+    """Translate supported letters in a word into Braille dot patterns."""
     result = []
-    for ch in word.lower():
-        dots = BRAILLE_MAP.get(ch)
+
+    for character in word.lower():
+        dots = BRAILLE_MAP.get(character)
+
         if dots:
-            result.append({
-                "letter": ch,
-                "dots": dots
-            })
+            result.append(
+                {
+                    "letter": character,
+                    "dots": dots,
+                }
+            )
+
     return result

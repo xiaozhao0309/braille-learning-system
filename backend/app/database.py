@@ -1,13 +1,12 @@
-import sqlite3
 import os
+import sqlite3
 from datetime import datetime
 
-# Database file name
 #DB_NAME = "braille.db"
 DB_NAME = os.getenv("DB_NAME", "braille.db")
 
 # Initialize database and create table if it does not exist
-def init_db():
+def init_db():    
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
 
@@ -26,7 +25,6 @@ def init_db():
 
     conn.commit()
     conn.close()
-
 
 # Save one practice record into database
 def save_record(student_name, target_letter, expected, actual, is_correct):

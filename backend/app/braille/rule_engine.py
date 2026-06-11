@@ -1,9 +1,13 @@
+"""Evaluate expected and actual Braille dot patterns."""
+
+
 def evaluate_braille(expected, actual):
+    """Compare two Braille patterns and identify any dot differences."""
     expected_set = set(expected)
     actual_set = set(actual)
 
-    missing = sorted(list(expected_set - actual_set))
-    extra = sorted(list(actual_set - expected_set))
+    missing = sorted(expected_set - actual_set)
+    extra = sorted(actual_set - expected_set)
 
     is_correct = expected_set == actual_set
 
@@ -20,7 +24,7 @@ def evaluate_braille(expected, actual):
         "isCorrect": is_correct,
         "diff": {
             "missingDots": missing,
-            "extraDots": extra
+            "extraDots": extra,
         },
-        "errorType": error_type
+        "errorType": error_type,
     }

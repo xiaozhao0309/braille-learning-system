@@ -127,11 +127,6 @@ button:hover {
   margin: 6px 0;
 }
 
-.disabled {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
 .mode-switch {
   display: flex;
   gap: 12px;

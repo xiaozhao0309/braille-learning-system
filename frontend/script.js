@@ -1,13 +1,10 @@
 document.addEventListener("DOMContentLoaded", () => {
-  //const API_BASE = "http://127.0.0.1:8000";
-  //deploy online
   const API_BASE = "https://braille-learning-backend.onrender.com";
 
   let expectedDots = [];
   let actualDots = [];
 
-  // Random mode state
-  const letters = "abcdefghijklmnopqrstuvwxyz".split("");
+  // Random practice state
   let currentTarget = null;
   let currentExpected = [];
   let isRandomMode = false;
@@ -16,7 +13,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const studentNameInput = document.getElementById("studentName");
   const startSessionBtn = document.getElementById("startSessionBtn");
-  const currentStudentDisplay = document.getElementById("currentStudentDisplay");
+  const currentStudentDisplay = document.getElementById(
+    "currentStudentDisplay"
+  );
 
   const dotButtons = document.querySelectorAll(".dot");
 
@@ -61,32 +60,31 @@ document.addEventListener("DOMContentLoaded", () => {
         : "Selected: None";
   }
 
-  // Week 6 upgrade: text-to-speech for accessibility
+  // Read feedback aloud to support accessibility.
   function speak(text) {
     const synth = window.speechSynthesis;
 
     function speakWithVoice() {
       const voices = synth.getVoices();
-
       const utterance = new SpeechSynthesisUtterance(text);
 
-      // ⭐ 固定使用 Samantha（你选的声音）
+      // Prefer Samantha when available, otherwise use an English voice.
       const selectedVoice =
-        voices.find(v => v.name === "Samantha") ||   // Prefer using Samantha
-        voices.find(v => v.lang === "en-US");        // or fallback
+        voices.find((voice) => voice.name === "Samantha") ||
+        voices.find((voice) => voice.lang === "en-US");
 
       if (selectedVoice) {
         utterance.voice = selectedVoice;
       }
 
-      utterance.rate = 0.95;   // a bit slower
-      utterance.pitch = 1.1;   // a bit higher
+      utterance.rate = 0.95;
+      utterance.pitch = 1.1;
 
-      synth.cancel();          // avoid overlap
+      synth.cancel();
       synth.speak(utterance);
     }
 
-    // Resolve the issue of voices not loading yet
+    // Wait for browser voices to load when they are not immediately available.
     if (synth.getVoices().length === 0) {
       synth.onvoiceschanged = speakWithVoice;
     } else {
@@ -95,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function renderResult(data) {
-    // Week 6: get AI-assisted explanation from backend response
+    // Read the AI-assisted explanation from the backend response.
     const aiExplanation = data.aiExplanation || {};
 
     resultBox.innerHTML = `
@@ -118,7 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }</p>
     `;
 
-    // Week 6: display both basic feedback and AI-assisted explanation
+    // Display both the basic feedback and AI-assisted explanation.
     explanationBox.innerHTML = `
       <h3>AI-Assisted Explanation</h3>
 
@@ -144,7 +142,8 @@ document.addEventListener("DOMContentLoaded", () => {
         aiExplanation.nextStep || "No next step"
       }</p>
     `;
-    // Week 6: voice feedback
+
+    // Read the completed feedback aloud.
     const voiceText = `
     Result: ${data.isCorrect ? "Correct" : "Incorrect"}.
     ${data.feedback?.message || ""}
@@ -161,7 +160,9 @@ document.addEventListener("DOMContentLoaded", () => {
       <h3>Statistics</h3>
       <p><strong>Student:</strong> ${currentStudentName}</p>
       <p><strong>Total Attempts:</strong> ${data.totalAttempts ?? 0}</p>
-      <p><strong>Correct Attempts:</strong> ${data.correctAttempts ?? 0}</p>
+      <p><strong>Correct Attempts:</strong> ${
+        data.correctAttempts ?? 0
+      }</p>
       <p><strong>Accuracy:</strong> ${data.accuracy ?? 0}</p>
     `;
   }
@@ -189,9 +190,15 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="history-item">
             <p><strong>${index + 1}. Target:</strong> ${target}</p>
             <p><strong>Status:</strong> ${status}</p>
-            <p><strong>Expected Dots:</strong> ${item.expected || "None"}</p>
-            <p><strong>Actual Dots:</strong> ${item.actual || "None"}</p>
-            <p><strong>Time:</strong> ${item.createdAt || "Unknown"}</p>
+            <p><strong>Expected Dots:</strong> ${
+              item.expected || "None"
+            }</p>
+            <p><strong>Actual Dots:</strong> ${
+              item.actual || "None"
+            }</p>
+            <p><strong>Time:</strong> ${
+              item.createdAt || "Unknown"
+            }</p>
             <hr />
           </div>
         `;
@@ -261,14 +268,16 @@ document.addEventListener("DOMContentLoaded", () => {
   function toggleDot(group, dotNumber, button) {
     dotNumber = Number(dotNumber);
 
-    // In random mode, expected dots should not be editable
+    // Prevent expected dots from being edited in random mode.
     if (isRandomMode && group === "expected") {
       return;
     }
 
     if (group === "expected") {
       if (expectedDots.includes(dotNumber)) {
-        expectedDots = expectedDots.filter((dot) => dot !== dotNumber);
+        expectedDots = expectedDots.filter(
+          (dot) => dot !== dotNumber
+        );
         button.classList.remove("active");
       } else {
         expectedDots.push(dotNumber);
@@ -278,7 +287,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (group === "actual") {
       if (actualDots.includes(dotNumber)) {
-        actualDots = actualDots.filter((dot) => dot !== dotNumber);
+        actualDots = actualDots.filter(
+          (dot) => dot !== dotNumber
+        );
         button.classList.remove("active");
       } else {
         actualDots.push(dotNumber);
@@ -299,7 +310,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const response = await fetch(
-        `${API_BASE}/stats/summary?student_name=${encodeURIComponent(currentStudentName)}`
+        `${API_BASE}/stats/summary?student_name=${encodeURIComponent(
+          currentStudentName
+        )}`
       );
 
       if (!response.ok) {
@@ -351,11 +364,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     resultBox.innerHTML = "<p>Generating random letter...</p>";
-    explanationBox.innerHTML = "<p>Please enter the Braille dots for the target letter.</p>";
+    explanationBox.innerHTML =
+      "<p>Please enter the Braille dots for the target letter.</p>";
 
     try {
       const response = await fetch(
-        `${API_BASE}/practice/personalized-target?student_name=${encodeURIComponent(currentStudentName)}`
+        `${API_BASE}/practice/personalized-target?student_name=${encodeURIComponent(
+          currentStudentName
+        )}`
       );
 
       if (!response.ok) {
@@ -368,27 +384,36 @@ document.addEventListener("DOMContentLoaded", () => {
       const dots = data.dots || [];
       const reason = data.reason;
 
-      // ⭐关键：更新 random mode 状态
+      // Update the random practice state.
       setRandomMode(randomLetter, dots);
 
-      // 清空 actual dots
+      // Clear the previously selected actual dots.
       actualDots = [];
+
       document
         .querySelectorAll('.dot[data-group="actual"]')
-        .forEach((button) => button.classList.remove("active"));
+        .forEach((button) => {
+          button.classList.remove("active");
+        });
 
       updateDotsText();
 
       resultBox.innerHTML = `
         <h3>Random Practice</h3>
         <p><strong>New target generated.</strong></p>
-        <p>Enter the Braille pattern for letter <strong>${randomLetter.toUpperCase()}</strong>.</p>
+        <p>
+          Enter the Braille pattern for letter
+          <strong>${randomLetter.toUpperCase()}</strong>.
+        </p>
         <p><strong>Practice Reason:</strong> ${reason}</p>
       `;
 
       explanationBox.innerHTML = `
         <h3>Explanation</h3>
-        <p>The system selected this letter based on your practice history.</p>
+        <p>
+          The system selected this letter based on your practice
+          history.
+        </p>
       `;
 
       speak(`The random letter is ${randomLetter.toUpperCase()}.`);
@@ -402,21 +427,11 @@ document.addEventListener("DOMContentLoaded", () => {
     button.addEventListener("click", () => {
       const group = button.dataset.group;
       const dotNumber = button.dataset.dot;
+
       toggleDot(group, dotNumber, button);
     });
   });
 
-  // startSessionBtn.addEventListener("click", () => {
-  //   const enteredName = studentNameInput.value.trim();
-
-  //   if (!enteredName) {
-  //     alert("Please enter your name first.");
-  //     return;
-  //   }
-
-  //   currentStudentName = enteredName;
-  //   currentStudentDisplay.textContent = `Current Student: ${currentStudentName}`;
-  // });
   startSessionBtn.addEventListener("click", () => {
     const enteredName = studentNameInput.value.trim();
 
@@ -426,26 +441,27 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     currentStudentName = enteredName;
-    currentStudentDisplay.textContent = `Current Student: ${currentStudentName}`;
+    currentStudentDisplay.textContent =
+      `Current Student: ${currentStudentName}`;
 
-    // Reset practice state when switching student
+    // Reset the practice state when the student changes.
     expectedDots = [];
     actualDots = [];
     currentTarget = null;
     currentExpected = [];
     isRandomMode = false;
 
-    // Clear dot selections
+    // Clear all selected Braille dots.
     document.querySelectorAll(".dot").forEach((button) => {
       button.classList.remove("active");
     });
 
-    // Reset mode and target display
+    // Reset the practice mode and target display.
     targetLetterText.textContent = "Target: None";
     updateDotsText();
     updateModeButtons();
 
-    // Clear previous result and explanation
+    // Clear the previous result and explanation.
     resultBox.innerHTML = `
       <p>Result will appear here.</p>
     `;
@@ -454,14 +470,14 @@ document.addEventListener("DOMContentLoaded", () => {
       <p>AI-assisted explanation will appear here.</p>
     `;
 
-    // Clear old statistics
+    // Clear statistics from the previous student.
     statsBox.innerHTML = `
       <p>Total Attempts: -</p>
       <p>Correct Attempts: -</p>
       <p>Accuracy: -</p>
     `;
 
-    // Clear old history
+    // Clear practice history from the previous student.
     historyBox.innerHTML = `
       <p>No recent attempts loaded yet.</p>
     `;
@@ -507,9 +523,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     explanationBox.innerHTML = `
       <h3>Explanation</h3>
-      <p>The system will generate the expected Braille pattern automatically in random mode.</p>
+      <p>
+        The system will generate the expected Braille pattern
+        automatically in random mode.
+      </p>
     `;
   });
+
   generateBtn.addEventListener("click", generateRandomLetter);
 
   submitBtn.addEventListener("click", async () => {
@@ -520,9 +540,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (expectedToUse.length === 0 || actualDots.length === 0) {
-      renderError(resultBox, "Please select dots before submitting.");
+      renderError(
+        resultBox,
+        "Please select dots before submitting."
+      );
+
       explanationBox.innerHTML = `
-        <p>Please complete the required Braille input before submitting.</p>
+        <p>
+          Please complete the required Braille input before submitting.
+        </p>
       `;
       return;
     }
@@ -531,25 +557,28 @@ document.addEventListener("DOMContentLoaded", () => {
     explanationBox.innerHTML = "<p>Generating explanation...</p>";
 
     if (!currentStudentName) {
-      renderError(resultBox, "Please start a session by entering your name.");
+      renderError(
+        resultBox,
+        "Please start a session by entering your name."
+      );
       explanationBox.innerHTML = "";
       return;
     }
 
     const payload = {
-      student_name: currentStudentName, //add student's name
+      student_name: currentStudentName,
       target_letter: isRandomMode ? currentTarget : "",
       expected: sortDots(expectedToUse),
-      actual: sortDots(actualDots)
+      actual: sortDots(actualDots),
     };
 
     try {
       const response = await fetch(`${API_BASE}/practice/submit`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -560,6 +589,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const data = await response.json();
+
       renderResult(data);
       loadStats();
       loadHistory();
@@ -574,15 +604,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
   updateDotsText();
   updateModeButtons();
-
-  // ===== Voice Test (Week 6 only) =====
-  // window.speechSynthesis.onvoiceschanged = () => {
-  //   const voices = speechSynthesis.getVoices();
-
-  //   console.log("Available voices:");
-
-  //   voices.forEach((voice, index) => {
-  //     console.log(index, voice.name, voice.lang);
-  //   });
-  // };
 });
